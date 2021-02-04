@@ -13,25 +13,40 @@ import os
 class DisplayServer(object):
     
     def __init__(self, *args, **kwargs):
+
+        i2c_bus = 1
         adress = os.popen("i2cdetect -y -r 1 0x48 0x48 | egrep '48' | awk '{print $2}'").read()
+        adress8 = os.popen("i2cdetect -y -r 8 0x48 0x48 | egrep '48' | awk '{print $2}'").read()
         if(adress=='48\n'):
             self.ads = ads1115.ADS1115()
+        elif (adress8 =='48\n'):
+            self.ads = ads1115.ADS1115(i2c_bus=8)
+            i2c_bus = 8
         else:
             self.ads = None
-            
+
+
         adress = os.popen("i2cdetect -y -r 1 0x41 0x41 | egrep '41' | awk '{print $2}'").read()
+        adress8 = os.popen("i2cdetect -y -r 8 0x41 0x41 | egrep '41' | awk '{print $2}'").read()
         if(adress=='41\n'):
             self.ina219 = ina219.INA219(addr=0x41)
+        if(adress8=='41\n'):
+            self.ina219 = ina219.INA219(addr=0x41, i2c_bus=8)
+            i2c_bus = 8
         else:
             self.ina219 = None
             
         adress = os.popen("i2cdetect -y -r 1 0x42 0x42 | egrep '42' | awk '{print $2}'").read()
+        adress8 = os.popen("i2cdetect -y -r 8 0x42 0x42 | egrep '42' | awk '{print $2}'").read()
         if(adress=='42\n'):
             self.ina = ina219.INA219(addr=0x42)
+        if(adress8=='42\n'):
+            self.ina = ina219.INA219(addr=0x42, i2c_bus=8)
+            i2c_bus = 8
         else:
             self.ina = None
             
-        self.display = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=1, gpio=1) 
+        self.display = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=i2c_bus, gpio=1) 
         self.display.begin()
         self.display.clear()
         self.display.display()

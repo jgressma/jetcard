@@ -31,20 +31,31 @@ from jetcard import ina219
 import os
 import subprocess
 
+
+i2c_bus = 1
 adress = os.popen("i2cdetect -y -r 1 0x48 0x48 | egrep '48' | awk '{print $2}'").read()
+adress8 = os.popen("i2cdetect -y -r 8 0x48 0x48 | egrep '48' | awk '{print $2}'").read()
 if(adress=='48\n'):
     ads = ads1115.ADS1115()
+elif (adress8 =='48\n'):
+    ads = ads1115.ADS1115(i2c_bus=8)
+    i2c_bus = 8
 else:
     ads = None
 
+
 adress = os.popen("i2cdetect -y -r 1 0x41 0x41 | egrep '41' | awk '{print $2}'").read()
+adress8 = os.popen("i2cdetect -y -r 8 0x41 0x41 | egrep '41' | awk '{print $2}'").read()
 if(adress=='41\n'):
     ina = ina219.INA219(addr=0x41)
+if(adress8=='41\n'):
+    ina = ina219.INA219(addr=0x41, i2c_bus=8)
+    i2c_bus = 8
 else:
     ina = None
 
 # 128x32 display with hardware I2C:
-disp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=1, gpio=1) # setting gpio to 1 is hack to avoid platform detection
+disp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=i2c_bus, gpio=1) # setting gpio to 1 is hack to avoid platform detection
 
 # Initialize library.
 disp.begin()

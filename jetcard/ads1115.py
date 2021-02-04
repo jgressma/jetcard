@@ -50,8 +50,8 @@ ADS1115_CONFIG_CQUE_NONE        = 0x03 # Disable the comparator and put ALERT/RD
 
 class ADS1115(object):
 
-    def __init__(self, address=0x48):
-        self.bus = smbus.SMBus(1);
+    def __init__(self, address=0x48, i2c_bus=1):
+        self.bus = smbus.SMBus(i2c_bus);
         self.addr = address;
         self.channel = 0;
         self.gain = ADS1115_CONFIG_PGA_4_096V;
