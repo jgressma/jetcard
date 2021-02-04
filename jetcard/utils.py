@@ -79,7 +79,7 @@ def cpu_usage():
     Returns:
         float: The current CPU usage fraction.
     """
-    return float(subprocess.check_output("top -bn1 | grep load | awk '{printf \"%.2f\", $(NF-2)}'", shell = True ).decode('utf-8'))
+    return float(subprocess.check_output("LANG=US_us top -bn1 | grep load | awk '{printf \"%.2f\", $(NF-2)}'", shell = True ).decode('utf-8'))
 
 
 def gpu_usage():
