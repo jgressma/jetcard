@@ -60,7 +60,7 @@ def power_usage():
         float: The current power usage in Watts.
     """
 
-    xavier_path = "/sys/bus/i2c/drivers/ina3221x/7-0040/iio\:device0/in_power0_input"
+    xavier_path = "/sys/bus/i2c/drivers/ina3221x/7-0040/iio:device0/in_power0_input"
     jetson_path = "/sys/devices/50000000.host1x/546c0000.i2c/i2c-6/6-0040/iio:device0/in_power0_input"
 
     if os.path.exists(jetson_path):
