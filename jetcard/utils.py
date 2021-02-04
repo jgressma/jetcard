@@ -50,7 +50,7 @@ def power_mode():
     Returns:
         str: The current power mode.  Either 'MAXN' or '5W'.
     """
-    return subprocess.check_output("nvpmodel -q | grep -o '5W\|MAXN'", shell = True ).decode('utf-8').strip('\n')
+    return subprocess.check_output("nvpmodel -q | grep -o '15W\|10W\|5W\|MAXN'", shell = True ).decode('utf-8').strip('\n')
 
 
 def power_usage():
@@ -59,8 +59,18 @@ def power_usage():
     Returns:
         float: The current power usage in Watts.
     """
-    with open("/sys/devices/50000000.host1x/546c0000.i2c/i2c-6/6-0040/iio:device0/in_power0_input", 'r') as f:
-        return float(f.read()) / 1000.0
+
+    xavier_path = "/sys/bus/i2c/drivers/ina3221x/7-0040/iio\:device0/in_power0_input"
+    jetson_path = "/sys/devices/50000000.host1x/546c0000.i2c/i2c-6/6-0040/iio:device0/in_power0_input"
+
+    if os.path.exists(jetson_path):
+        with open(jetson_path, 'r') as f:
+            return float(f.read()) / 1000.0
+    elif os.path.exists(xavier_path):
+        with open(xavier_path, 'r') as f:
+            return float(f.read()) / 1000.0
+    else:
+        return 0.0
 
     
 def cpu_usage():
