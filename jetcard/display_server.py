@@ -45,6 +45,8 @@ class DisplayServer(object):
             i2c_bus = 8
         else:
             self.ina = None
+        
+        print("I2C-BUS:", i2c_bus)
             
         self.display = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=i2c_bus, gpio=1) 
         self.display.begin()
@@ -161,6 +163,8 @@ class DisplayServer(object):
         self.disable_stats()
         self.draw.rectangle((0, 0, self.image.width, self.image.height), outline=0, fill=0)
         
+        print(text)
+
         lines = text.split('\n')
         top = 2
         for line in lines:
