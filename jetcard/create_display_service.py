@@ -9,6 +9,9 @@ Description=JetCard display service
 [Service]
 Type=simple
 User=%s
+PermissionsStartOnly=true
+ExecStartPre=/bin/chmod 660 /sys/bus/i2c/drivers/ina3221x/7-0040/iio:device0/in_power0_input
+ExecStartPre=/bin/chgrp i2c /sys/bus/i2c/drivers/ina3221x/7-0040/iio:device0/in_power0_input
 ExecStart=/bin/sh -c "python3 -m jetcard.display_server"
 WorkingDirectory=%s
 Restart=always
