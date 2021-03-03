@@ -1,4 +1,4 @@
-# JetCard adaption for Xavier NX
+# JetCard adaption for Nano / Xavier NX
 
 JetCard is a system configuration that makes it easy to get started with AI.  It comes pre-loaded with
 
