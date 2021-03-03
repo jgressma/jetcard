@@ -25,32 +25,29 @@ import Adafruit_SSD1306
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
-from .utils import ip_address
+from .utils import ip_address, platform_is_nano
 from jetcard import ads1115
 from jetcard import ina219
 import os
 import subprocess
 
 
-i2c_bus = 1
-adress = os.popen("i2cdetect -y -r 1 0x48 0x48 | egrep '48' | awk '{print $2}'").read()
-adress8 = os.popen("i2cdetect -y -r 8 0x48 0x48 | egrep '48' | awk '{print $2}'").read()
+
+if platform_is_nano():
+    i2c_bus = 1
+else:
+    i2c_bus = 8 # NX?
+
+adress = os.popen("i2cdetect -y -r " + str(i2c_bus) +  " 0x48 0x48 | egrep '48' | awk '{print $2}'").read()
 if(adress=='48\n'):
-    ads = ads1115.ADS1115()
-elif (adress8 =='48\n'):
-    ads = ads1115.ADS1115(i2c_bus=8)
-    i2c_bus = 8
+    ads = ads1115.ADS1115(i2c_bus=i2c_bus)
 else:
     ads = None
 
 
-adress = os.popen("i2cdetect -y -r 1 0x41 0x41 | egrep '41' | awk '{print $2}'").read()
-adress8 = os.popen("i2cdetect -y -r 8 0x41 0x41 | egrep '41' | awk '{print $2}'").read()
+adress = os.popen("i2cdetect -y -r " + str(i2c_bus) +  " 0x41 0x41 | egrep '41' | awk '{print $2}'").read()
 if(adress=='41\n'):
-    ina = ina219.INA219(addr=0x41)
-if(adress8=='41\n'):
-    ina = ina219.INA219(addr=0x41, i2c_bus=8)
-    i2c_bus = 8
+    ina = ina219.INA219(addr=0x41, i2c_bus=i2c_bus)
 else:
     ina = None
 
@@ -89,16 +86,16 @@ font = ImageFont.load_default()
 
 
 while True:
-    
+
     # Draw a black filled box to clear the image.
     draw.rectangle((0,0,width,height), outline=0, fill=0)
 
     # Shell scripts for system monitoring from here : https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load
-    cmd = "top -bn1 | grep load | awk '{printf \"CPU Load:%.2f\", $(NF-2)}'"
+    cmd = "LANG=US_us top -bn1 | grep load | awk '{printf \"CPU Load:%.2f\", $(NF-2)}'"
     CPU = subprocess.check_output(cmd, shell = True )
-    cmd = "free -m | awk 'NR==2{printf \"Mem:%s/%sMB %.1f%%\", $3,$2,$3*100/$2 }'"
+    cmd = "LANG=US_us free -m | awk 'NR==2{printf \"Mem:%s/%sMB %.1f%%\", $3,$2,$3*100/$2 }'"
     MemUsage = subprocess.check_output(cmd, shell = True )
-    cmd = "df -h | awk '$NF==\"/\"{printf \"Disk:%d/%dGB %s\", $3,$2,$5}'"
+    cmd = "LANG=US_us df -h | awk '$NF==\"/\"{printf \"Disk:%d/%dGB %s\", $3,$2,$5}'"
     Disk = subprocess.check_output(cmd, shell = True )
 
     # Write two lines of text.
@@ -123,7 +120,7 @@ while True:
             draw.text((120, top), ' ', font=font, fill=255)
         else:
             draw.text((120, top), '*', font=font, fill=255)
-        draw.text((x, top+8), ("%.1fV")%bus_voltage + ("  %.2fA")%(current/1000) + ("  %2.0f%%")%p, font=font, fill=255)    
+        draw.text((x, top+8), ("%.1fV")%bus_voltage + ("  %.2fA")%(current/1000) + ("  %2.0f%%")%p, font=font, fill=255)
         draw.text((x, top+16),    str(MemUsage.decode('utf-8')),  font=font, fill=255)
         draw.text((x, top+25),    str(Disk.decode('utf-8')),  font=font, fill=255)
     elif(ads != None):

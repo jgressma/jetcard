@@ -17,11 +17,11 @@ def platform_notebooks_dir():
 
 def platform_model_str():
     with open('/proc/device-tree/model', 'r') as f:
-        return str(f.read()[:-1])
+        return str(f.read()[:-1]).lower()
 
 
 def platform_is_nano():
-    return 'jetson-nano' in platform_model_str()
+    return 'nano' in platform_model_str()
 
 
 def ip_address(interface):

@@ -5,50 +5,41 @@ import PIL.Image
 import PIL.ImageFont
 import PIL.ImageDraw
 from flask import Flask
-from .utils import ip_address, power_mode, power_usage, cpu_usage, gpu_usage, memory_usage, disk_usage
+from .utils import ip_address, power_mode, power_usage, cpu_usage, gpu_usage, memory_usage, disk_usage, platform_is_nano
 from jetcard import ads1115
 from jetcard import ina219
 import os
 
 class DisplayServer(object):
-    
+
     def __init__(self, *args, **kwargs):
 
-        i2c_bus = 1
-        adress = os.popen("i2cdetect -y -r 1 0x48 0x48 | egrep '48' | awk '{print $2}'").read()
-        adress8 = os.popen("i2cdetect -y -r 8 0x48 0x48 | egrep '48' | awk '{print $2}'").read()
-        if(adress=='48\n'):
-            self.ads = ads1115.ADS1115()
-        elif (adress8 =='48\n'):
-            self.ads = ads1115.ADS1115(i2c_bus=8)
-            i2c_bus = 8
+        if platform_is_nano():
+            i2c_bus = 1
+        else:
+            i2c_bus = 8 # NX?
+
+        adress = os.popen("i2cdetect -y -r " + str(i2c_bus) +  " 0x48 0x48 | egrep '48' | awk '{print $2}'").read()
+        if(adress=='41\n'):
+            self.ads = ads1115.ADS1115(i2c_bus=i2c_bus)
         else:
             self.ads = None
 
-
-        adress = os.popen("i2cdetect -y -r 1 0x41 0x41 | egrep '41' | awk '{print $2}'").read()
-        adress8 = os.popen("i2cdetect -y -r 8 0x41 0x41 | egrep '41' | awk '{print $2}'").read()
+        adress = os.popen("i2cdetect -y -r " + str(i2c_bus) +  " 0x41 0x41 | egrep '41' | awk '{print $2}'").read()
         if(adress=='41\n'):
-            self.ina219 = ina219.INA219(addr=0x41)
-        if(adress8=='41\n'):
-            self.ina219 = ina219.INA219(addr=0x41, i2c_bus=8)
-            i2c_bus = 8
+            self.ina219 = ina219.INA219(addr=0x41, i2c_bus=i2c_bus)
         else:
             self.ina219 = None
-            
-        adress = os.popen("i2cdetect -y -r 1 0x42 0x42 | egrep '42' | awk '{print $2}'").read()
-        adress8 = os.popen("i2cdetect -y -r 8 0x42 0x42 | egrep '42' | awk '{print $2}'").read()
+
+        adress = os.popen("i2cdetect -y -r " + str(i2c_bus) +  " 0x42 0x42 | egrep '42' | awk '{print $2}'").read()
         if(adress=='42\n'):
-            self.ina = ina219.INA219(addr=0x42)
-        if(adress8=='42\n'):
-            self.ina = ina219.INA219(addr=0x42, i2c_bus=8)
-            i2c_bus = 8
+            self.ina = ina219.INA219(addr=0x42, i2c_bus=i2c_bus)
         else:
             self.ina = None
-        
+
         print("I2C-BUS:", i2c_bus)
-            
-        self.display = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=i2c_bus, gpio=1) 
+
+        self.display = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=i2c_bus, gpio=1)
         self.display.begin()
         self.display.clear()
         self.display.display()
@@ -60,7 +51,7 @@ class DisplayServer(object):
         self.stats_thread = None
         self.stats_interval = 1.0
         self.enable_stats()
-        
+
     def _run_display_stats(self):
         Charge = False
         while self.stats_enabled:
@@ -134,23 +125,23 @@ class DisplayServer(object):
             cpu_percent = '%02d%%' % int(round(cpu_usage() * 100.0, 1))
             ram_percent = '%02d%%' % int(round(memory_usage() * 100.0, 1))
             disk_percent = '%02d%%' % int(round(disk_usage() * 100.0, 1))
-            
+
             entries = [power_watts, cpu_percent, gpu_percent, ram_percent, disk_percent]
             for i, entry in enumerate(entries):
                 self.draw.text((i * offset + 4, top), entry, font=self.font, fill=255)
 
             self.display.image(self.image)
             self.display.display()
-    
+
             time.sleep(self.stats_interval)
-            
+
     def enable_stats(self):
         # start stats display thread
         if not self.stats_enabled:
             self.stats_enabled = True
             self.stats_thread = threading.Thread(target=self._run_display_stats)
             self.stats_thread.start()
-        
+
     def disable_stats(self):
         self.stats_enabled = False
         if self.stats_thread is not None:
@@ -162,7 +153,7 @@ class DisplayServer(object):
     def set_text(self, text):
         self.disable_stats()
         self.draw.rectangle((0, 0, self.image.width, self.image.height), outline=0, fill=0)
-        
+
         print(text)
 
         lines = text.split('\n')
@@ -170,10 +161,10 @@ class DisplayServer(object):
         for line in lines:
             self.draw.text((4, top), line, font=self.font, fill=255)
             top += 10
-        
+
         self.display.image(self.image)
         self.display.display()
-        
+
 
 server = DisplayServer()
 app = Flask(__name__)
@@ -185,7 +176,7 @@ def enable_stats():
     server.enable_stats()
     return "stats enabled"
 
-    
+
 @app.route('/stats/off')
 def disable_stats():
     global server
